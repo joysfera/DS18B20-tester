@@ -22,12 +22,12 @@ void printDeviceAddress(byte index);
 
 void lcd_header()
 {
-	lcd.clearScreen();
-	lcd.setTextSize(1);
-	lcd.setInverse(true);
-	lcd.print("DS18B20 tester");
+    lcd.clearScreen();
+    lcd.setTextSize(1);
+    lcd.setInverse(true);
+    lcd.print("DS18B20 tester");
     lcd.clearRow();
-	lcd.setInverse(false);
+    lcd.setInverse(false);
 }
 
 #define lcd_print(c, r, x) { lcd.setCursor(c, r); lcd.print(x); lcd.clearRow(); }
@@ -67,10 +67,10 @@ void loop(void)
     if (u >= 1022) {
         // 1wire bus is OK
     }
-    else if (u > 969) {     
+    else if (u > 969) {
         lcd_print(0, 2, "Bus high curr.");
     }
-    else {       
+    else {
         lcd_print(0, 2, "Bus short circ");
         delay(5000);
     }
@@ -93,10 +93,10 @@ void loop(void)
         }
 
         printDeviceAddress();
-	    sensors.requestTemperatures();
+        sensors.requestTemperatures();
 
         float tempC = sensors.getTempCByIndex(0);
-	    printTemperature(tempC);
+        printTemperature(tempC);
         delay(2500);
 
         lcd_print(0, 1, "Family test");
@@ -141,11 +141,11 @@ void test_family()
 // function to print a device address
 void printDeviceAddress()
 {
-	byte deviceAddress[8];
-	if (! sensors.getAddress(deviceAddress, 0)) {
+    byte deviceAddress[8];
+    if (! sensors.getAddress(deviceAddress, 0)) {
         lcd_print(0, 3, "ID N/A");
         dead_end();
-	}
+    }
 
     if (deviceAddress[0] != 0x28) {
         lcd_print(0, 3, "Family error");
@@ -153,41 +153,40 @@ void printDeviceAddress()
     }
 
     lcd.setCursor(0, 3);
-	for (uint8_t i = 1; i < 7; i++)
-	{
-		if (deviceAddress[i] < 16) lcd.print("0");
-		lcd.print(deviceAddress[i], HEX);
-	}
-	lcd.clearRow();
+    for (uint8_t i = 1; i < 7; i++) {
+        if (deviceAddress[i] < 16) lcd.print("0");
+        lcd.print(deviceAddress[i], HEX);
+    }
+    lcd.clearRow();
 }
 
 // function to print the temperature for a device
 void printTemperature(float tempC)
 {
-	char buf[15];
-	ftoa(buf, tempC, 2);
+    char buf[15];
+    ftoa(buf, tempC, 2);
     strcat(buf, "\134C");
-	lcd.setCursor(0, 4);
-	lcd.print(buf);
-	lcd.clearRow();
+    lcd.setCursor(0, 4);
+    lcd.print(buf);
+    lcd.clearRow();
 }
 
 char *ftoa(char *a, double f, byte precision)
 {
-	long p[] = {0,10,100,1000,10000,100000,1000000,10000000,100000000};
-  
-	char *ret = a;
-	long heiltal = (long)f;
-	itoa(heiltal, a, 10);
-	while(*a != '\0') a++;
-	*a++ = '.';
-	long desimal = abs((long)((f - heiltal) * p[precision]));
-	byte pp = precision - 1;
-	while(pp > 0 && desimal < p[pp]) {
-		*a++ = '0';
-		pp--;
-	}
-	itoa(desimal, a, 10);
-	return ret;
+    long p[] = {0,10,100,1000,10000,100000,1000000,10000000,100000000};
+
+    char *ret = a;
+    long heiltal = (long)f;
+    itoa(heiltal, a, 10);
+    while(*a != '\0') a++;
+    *a++ = '.';
+    long desimal = abs((long)((f - heiltal) * p[precision]));
+    byte pp = precision - 1;
+    while(pp > 0 && desimal < p[pp]) {
+        *a++ = '0';
+        pp--;
+    }
+    itoa(desimal, a, 10);
+    return ret;
 }
 
