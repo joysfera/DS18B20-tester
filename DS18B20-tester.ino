@@ -22,6 +22,7 @@ void printDeviceAddress(byte index);
 
 void lcd_header()
 {
+    lcd.setInverse(false);
     lcd.clearScreen();
     lcd.setTextSize(1);
     lcd.setInverse(true);
