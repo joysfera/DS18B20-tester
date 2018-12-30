@@ -1,10 +1,40 @@
-// DS18B20 tester
+// DS18B20 tester for Arduino (with optional LCD from Nokia 5110)
 // written by Petr Stehlik in December 2018
 // GPL v3
+//
+// Needs 3 resistors:
+// 1) connect resistor 270 Ohm between pins A0 and A1
+// 2) connect resistor 270 Ohm between pins A2 and A3
+// 3) connect resistor 2200 Ohm between pin A3 and +5 V
+//
+// Connect the tested sensor as follows:
+// - pin 1 of DS18B20 (GND) to GND of Arduino
+// - pin 2 of DS18B20 (Data) to pin A2 of Arduino
+// - pin 3 of DS18B20 (Vdd) to pin A0 of Arduino
+//
+
+#define HAVE_DISPLAY    false
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include "Joy_LCD5110.h"
+
+#if HAVE_DISPLAY
+# include "Joy_LCD5110.h"
+Joy_LCD5110 lcd(/*SCLK*/6, /*Din*/7, /*DC*/8, /*RESET*/ 9);  // display from Nokia 5110
+# define lcd_setCursor(c, r)  lcd.setCursor(c, r)
+# define lcd_setInverse(x)    lcd.setInverse(x)
+# define lcd_clearRow()       lcd.clearRow()
+# define lcd_print(x)         lcd.print(x)
+# define lcd_printh(x)        lcd.print(x, HEX)
+# define lcd_printat(c, r, x) { lcd.setCursor(c, r); lcd.print(x); lcd.clearRow(); }
+#else
+# define lcd_setCursor(c, r)
+# define lcd_setInverse(x)
+# define lcd_clearRow()
+# define lcd_print(x)         Serial.print(x)
+# define lcd_printh(x)        Serial.print(x, HEX)
+# define lcd_printat(c, r, x) Serial.println(x)
+#endif
 
 #define ONEWIRE_PIN   A3
 #define ONEWIRE_SENSE A2
@@ -14,14 +44,13 @@
 OneWire oneWire(ONEWIRE_PIN);
 DallasTemperature sensors(&oneWire);
 
-Joy_LCD5110 lcd(/*SCLK*/6, /*Din*/7, /*DC*/8, /*RESET*/ 9);
-
 char *ftoa(char *a, double f, byte precision);
 void printTemperature(byte index, byte row);
 void printDeviceAddress(byte index);
 
 void lcd_header()
 {
+#if HAVE_DISPLAY
     lcd.setInverse(false);
     lcd.clearScreen();
     lcd.setTextSize(1);
@@ -29,9 +58,8 @@ void lcd_header()
     lcd.print("DS18B20 tester");
     lcd.clearRow();
     lcd.setInverse(false);
+#endif
 }
-
-#define lcd_print(c, r, x) { lcd.setCursor(c, r); lcd.print(x); lcd.clearRow(); }
 
 void setup(void)
 {
@@ -39,6 +67,9 @@ void setup(void)
     pinMode(ONEWIRE_SENSE, INPUT);
     pinMode(POWER_PIN, OUTPUT);
     digitalWrite(POWER_PIN, LOW);
+#if !HAVE_DISPLAY
+    Serial.begin(115200);
+#endif
 }
 
 void loop(void)
@@ -50,29 +81,29 @@ void loop(void)
 
     // power short circuit test
     unsigned u = analogRead(POWER_SENSE);
-    lcd_print(0, 5, u);
+    lcd_printat(0, 5, u);
     if (u >= 1020) {
         // power is OK
     }
     else if (u > 969) {
-        lcd_print(0, 1, "Vdd high curr.");
+        lcd_printat(0, 1, "Vdd high curr.");
     }
     else {
-        lcd_print(0, 1, "Vdd short circ");
+        lcd_printat(0, 1, "Vdd short circ");
         delay(5000);
     }
 
     // data short circuit test
     u = analogRead(ONEWIRE_SENSE);
-    lcd_print(6*6, 5, u);
+    lcd_printat(6*6, 5, u);
     if (u >= 1022) {
         // 1wire bus is OK
     }
     else if (u > 969) {
-        lcd_print(0, 2, "Bus high curr.");
+        lcd_printat(0, 2, "Bus high curr.");
     }
     else {
-        lcd_print(0, 2, "Bus short circ");
+        lcd_printat(0, 2, "Bus short circ");
         delay(5000);
     }
 
@@ -87,8 +118,8 @@ void loop(void)
         sensors.begin();
 
         if (sensors.getDeviceCount() == 0) {
-            lcd.setInverse(true);
-            lcd_print(0, 3, "Parasite fail!");
+            lcd_setInverse(true);
+            lcd_printat(0, 3, "Parasite fail!");
             delay(5000);
             return;
         }
@@ -100,22 +131,22 @@ void loop(void)
         printTemperature(tempC);
         delay(2500);
 
-        lcd_print(0, 1, "Family test");
+        lcd_printat(0, 1, "Family test");
         for(byte cnt = 0; cnt < 20; cnt++) {
-            lcd_print(12*6, 1, cnt);
+            lcd_printat(12*6, 1, cnt);
             test_family();
         }
     }
     else {
-        lcd_print(0, 3, "  No sensor");
+        lcd_printat(0, 3, "  No sensor");
     }
     delay(500);
 }
 
 void dead_end()
 {
-    lcd.setInverse(true);
-    lcd_print(0, 5, "Reset to cont");
+    lcd_setInverse(true);
+    lcd_printat(0, 5, "Reset to cont");
     while(true) ;
 }
 
@@ -128,7 +159,7 @@ void test_family()
     delay(100);
     sensors.begin();
     if (sensors.getDeviceCount() == 0) {
-        lcd_print(0, 3, "No Sensor!");
+        lcd_printat(0, 3, "No Sensor!");
         dead_end();
     }
 
@@ -144,21 +175,21 @@ void printDeviceAddress()
 {
     byte deviceAddress[8];
     if (! sensors.getAddress(deviceAddress, 0)) {
-        lcd_print(0, 3, "ID N/A");
+        lcd_printat(0, 3, "ID N/A");
         dead_end();
     }
 
     if (deviceAddress[0] != 0x28) {
-        lcd_print(0, 3, "Family error");
+        lcd_printat(0, 3, "Family error");
         dead_end();
     }
 
-    lcd.setCursor(0, 3);
+    lcd_setCursor(0, 3);
     for (uint8_t i = 1; i < 7; i++) {
-        if (deviceAddress[i] < 16) lcd.print("0");
-        lcd.print(deviceAddress[i], HEX);
+        if (deviceAddress[i] < 16) lcd_print("0");
+        lcd_printh(deviceAddress[i]);
     }
-    lcd.clearRow();
+    lcd_clearRow();
 }
 
 // function to print the temperature for a device
@@ -167,9 +198,7 @@ void printTemperature(float tempC)
     char buf[15];
     ftoa(buf, tempC, 2);
     strcat(buf, "\134C");
-    lcd.setCursor(0, 4);
-    lcd.print(buf);
-    lcd.clearRow();
+    lcd_printat(0, 4, buf);
 }
 
 char *ftoa(char *a, double f, byte precision)
