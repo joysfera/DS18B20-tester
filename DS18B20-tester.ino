@@ -3,9 +3,9 @@
 // GPL v3
 //
 // Needs 3 resistors:
-// 1) connect resistor 270 Ohm between pins A0 and A1
-// 2) connect resistor 270 Ohm between pins A2 and A3
-// 3) connect resistor 2200 Ohm between pin A3 and +5 V
+// 1) connect resistor 270 Ohm (220 - 470 is OK) between pins A0 and A1
+// 2) connect resistor 270 Ohm (220 - 470 is OK) between pins A2 and A3
+// 3) connect resistor 2k2 (2k2 - 5k6 will do) between pin A3 and +5 V
 //
 // Connect the tested sensor as follows:
 // - pin 1 of DS18B20 (GND) to GND of Arduino
@@ -30,7 +30,7 @@ Joy_LCD5110 lcd(/*SCLK*/6, /*Din*/7, /*DC*/8, /*RESET*/ 9);  // display from Nok
 #else
 # define lcd_setCursor(c, r)
 # define lcd_setInverse(x)
-# define lcd_clearRow()
+# define lcd_clearRow()       Serial.println()
 # define lcd_print(x)         Serial.print(x)
 # define lcd_printh(x)        Serial.print(x, HEX)
 # define lcd_printat(c, r, x) Serial.println(x)
