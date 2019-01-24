@@ -44,9 +44,10 @@ Joy_LCD5110 lcd(/*SCLK*/6, /*Din*/7, /*DC*/8, /*RESET*/ 9);  // display from Nok
 OneWire oneWire(ONEWIRE_PIN);
 DallasTemperature sensors(&oneWire);
 
-char *ftoa(char *a, double f, byte precision);
-void printTemperature(byte index, byte row);
-void printDeviceAddress(byte index);
+// forward declarations are not required in Arduino IDE
+// char *ftoa(char *a, double f, byte precision);
+// void printTemperature(float value);
+// void printDeviceAddress(void);
 
 void lcd_header()
 {
@@ -219,4 +220,3 @@ char *ftoa(char *a, double f, byte precision)
     itoa(desimal, a, 10);
     return ret;
 }
-
